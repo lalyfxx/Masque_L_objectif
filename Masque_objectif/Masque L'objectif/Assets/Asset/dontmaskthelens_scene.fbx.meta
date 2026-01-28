@@ -112,6 +112,21 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Carpet
+    second: {fileID: 2100000, guid: 61c45daaac172b844b50e2650e8ec48b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Ceiling_lamp
+    second: {fileID: 2100000, guid: d285f48c0b430ad4cb9091d8e22aaab6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Ceiling_lamp_inside
+    second: {fileID: 2100000, guid: 5baf0d55d35919749a378031ffa21d9f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Chair
     second: {fileID: 2100000, guid: ba1cbb3bed1b6974c8d6154aa6d05d95, type: 2}
   - first:
@@ -329,6 +344,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: Woter
     second: {fileID: 2100000, guid: 13e6e532078939f47a94167ebf5a0432, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lamp
+    second: {fileID: 2100000, guid: 8742fdeddb933814d93a249b4e415cd4, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
