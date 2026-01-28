@@ -2,67 +2,119 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class PhotoManager : MonoBehaviour {
+public class PhotoManager : MonoBehaviour
+{
+    [Header("Références")]
     public Camera playerCam;
-    public float rayDistance = 10f;
-    public Image currentIcon;      
-    public TextMeshProUGUI currentText;  
+    public float rayDistance = 20f;
+    public LayerMask photoTargetLayer;          // ← drag le layer "Targets" ici dans l'Inspector
 
-    private int currentTarget = 0;
-    private string[] targetNames = {"Vase", "Livre", "Plante", "Chaussure", "Clé"};
-    private Color[] targetColors = {Color.red, Color.blue, Color.green, new Color(0.6f,0.3f,0.1f), Color.yellow};
+    [Header("UI")]
+    public Image currentIcon;
+    public TextMeshProUGUI currentText;
 
-    void Start() {
+    [Header("Debug")]
+    public bool drawPermanentRay = true;        // pour voir la ligne rouge en permanence
+
+    public int currentTarget = 0;
+    private string[] targetNames = { "Vase", "Livre", "Plante", "Chaussure", "Clé" };
+    private Color[] targetColors = { Color.red, Color.blue, Color.green, new Color(0.6f, 0.3f, 0.1f), Color.yellow };
+
+    // Pour que PhotoTarget puisse lire currentTarget sans FindObjectOfType
+    public static PhotoManager Instance { get; private set; }
+
+    void Awake()
+    {
+        Instance = this;
+    }
+
+    void Start()
+    {
         UpdateCurrentTask();
     }
 
     void Update()
-{
-    if (Input.GetMouseButtonDown(0) && CacheManager.Instance.CanShoot())
     {
-        // ────────────────────────────────────────────────
-        // VISUAL DEBUG : ligne rouge depuis la caméra
-        // ────────────────────────────────────────────────
-        Ray debugRay = playerCam.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0));
-        Debug.DrawRay(debugRay.origin, debugRay.direction * rayDistance, Color.red, 5f);  // reste 5 secondes
-
-        if (Physics.Raycast(debugRay, out RaycastHit hit, rayDistance))
+        // Ligne rouge permanente en Scene view (très utile pour debug)
+        if (drawPermanentRay && playerCam != null)
         {
-            Debug.Log("Touché : " + hit.collider.name + "   (layer = " + LayerMask.LayerToName(hit.collider.gameObject.layer) + ")");
-            Debug.DrawRay(debugRay.origin, debugRay.direction * hit.distance, Color.green, 2f);
+            Ray debugRay = playerCam.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0));
+            Debug.DrawRay(debugRay.origin, debugRay.direction * rayDistance, Color.red);
+        }
 
-            PhotoTarget target = hit.collider.GetComponent<PhotoTarget>();
-            if (target != null && target.targetID == currentTarget)
+        if (Input.GetMouseButtonDown(0) && CacheManager.Instance.CanShoot())
+        {
+            Ray ray = playerCam.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0));
+
+            if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, photoTargetLayer))
             {
-                Debug.Log("→ PhotoTarget valide ! ID = " + target.targetID);
-                TakePhoto();
+                GameObject touched = hit.collider.gameObject;
+
+                Debug.Log($"[HIT] Objet touché : {touched.name}", touched);
+                Debug.Log($"[HIT] Chemin hiérarchie : {GetFullPath(touched.transform)}", touched);
+                Debug.Log($"[HIT] Tag : {touched.tag}   |   Layer : {LayerMask.LayerToName(touched.layer)}", touched);
+
+                PhotoTarget target = hit.collider.GetComponentInParent<PhotoTarget>(); // InParent au cas où collider sur enfant
+
+                if (target != null)
+                {
+                    Debug.Log($"[HIT] PhotoTarget trouvé → ID = {target.targetID}  (cible actuelle = {currentTarget})", target.gameObject);
+
+                    if (target.targetID == currentTarget)
+                    {
+                        Debug.Log("→ PHOTO VALIDE !", target.gameObject);
+                        TakePhoto();
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"→ Mauvais ID (attendu {currentTarget}, reçu {target.targetID})");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("→ Touché mais PAS de PhotoTarget sur cet objet ou ses parents");
+                }
+
+                Debug.DrawRay(ray.origin, ray.direction * hit.distance, Color.green, 2f);
             }
             else
             {
-                Debug.LogWarning("Touché mais pas de PhotoTarget ou mauvais ID");
+                Debug.LogWarning($"RIEN TOUCHÉ (LayerMask = {LayerMask.LayerToName(photoTargetLayer.value)})");
             }
         }
-        else
-        {
-            Debug.LogWarning("Raycast n'a rien touché dans " + rayDistance + " mètres");
-        }
     }
-}
 
-    void TakePhoto() {
-        currentIcon.color = new Color(1,1,1,0);
+    void TakePhoto()
+    {
+        currentIcon.color = new Color(1, 1, 1, 0);
         currentText.text = "";
 
         currentTarget++;
-        if (currentTarget >= 5) {
+        if (currentTarget >= 5)
+        {
             GameManager.Instance.Win();
-        } else {
+        }
+        else
+        {
             UpdateCurrentTask();
         }
     }
 
-    void UpdateCurrentTask() {
+    void UpdateCurrentTask()
+    {
         currentIcon.color = targetColors[currentTarget];
         currentText.text = "Photo de : " + targetNames[currentTarget];
+    }
+
+    // Petite fonction utilitaire pour le debug
+    private string GetFullPath(Transform t)
+    {
+        string path = t.name;
+        while (t.parent != null)
+        {
+            t = t.parent;
+            path = t.name + "/" + path;
+        }
+        return path;
     }
 }
