@@ -240,7 +240,7 @@ GameObject:
   - component: {fileID: 7485256}
   - component: {fileID: 7485255}
   - component: {fileID: 7485258}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cylinder (1)
   m_TagString: PhotoTarget
   m_Icon: {fileID: 0}
@@ -1140,8 +1140,8 @@ GameObject:
   - component: {fileID: 331465802}
   - component: {fileID: 331465801}
   - component: {fileID: 331465804}
-  m_Layer: 0
-  m_Name: Cylinder
+  m_Layer: 8
+  m_Name: vase
   m_TagString: PhotoTarget
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1754,7 +1754,7 @@ GameObject:
   - component: {fileID: 871310110}
   - component: {fileID: 871310109}
   - component: {fileID: 871310112}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cube (7)
   m_TagString: PhotoTarget
   m_Icon: {fileID: 0}
@@ -2336,7 +2336,7 @@ GameObject:
   - component: {fileID: 1278282251}
   - component: {fileID: 1278282250}
   - component: {fileID: 1278282253}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cube (8)
   m_TagString: PhotoTarget
   m_Icon: {fileID: 0}
@@ -2537,7 +2537,7 @@ GameObject:
   - component: {fileID: 1364134968}
   - component: {fileID: 1364134967}
   - component: {fileID: 1364134970}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cube (5)
   m_TagString: PhotoTarget
   m_Icon: {fileID: 0}
@@ -2979,9 +2979,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerCam: {fileID: 1734477764}
-  rayDistance: 10
+  rayDistance: 15
+  photoTargetLayer:
+    serializedVersion: 2
+    m_Bits: 256
   currentIcon: {fileID: 473218047}
   currentText: {fileID: 65302748}
+  drawPermanentRay: 1
+  currentTarget: 0
 --- !u!1 &1539602593
 GameObject:
   m_ObjectHideFlags: 0
