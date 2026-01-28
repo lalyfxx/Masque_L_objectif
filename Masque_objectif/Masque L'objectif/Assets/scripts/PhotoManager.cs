@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
-using DG.Tweening;  // ← NEEDED pour le flash smooth
+using DG.Tweening;
 
 public class PhotoManager : MonoBehaviour
 {
@@ -15,8 +15,14 @@ public class PhotoManager : MonoBehaviour
     public Image currentIcon;
     public TextMeshProUGUI currentText;
 
-    [Header("🎥 FLASH PHOTO EFFECT")]
-    public Image photoFlash;           // ← Drag ton Image Flash (blanc plein écran)
+    [Header("🎥 FLASH PHOTO EFFECT (bonne photo)")]
+    public Image photoFlash;
+
+    [Header("🚫 FEEDBACK PHOTO RATÉE")]
+    public Image redFlashOverlay;
+    [SerializeField] private float missShakeDuration = 0.22f;
+    [SerializeField] private float missShakeStrength = 0.9f;
+    [SerializeField] private float missRedFlashDuration = 0.20f;
 
     [Header("Debug")]
     public bool drawPermanentRay = true;
@@ -36,9 +42,11 @@ public class PhotoManager : MonoBehaviour
     {
         UpdateCurrentTask();
         
-        // Cache le flash au démarrage
         if (photoFlash != null)
             photoFlash.gameObject.SetActive(false);
+
+        if (redFlashOverlay != null)
+            redFlashOverlay.gameObject.SetActive(false);
     }
 
     void Update()
@@ -75,11 +83,13 @@ public class PhotoManager : MonoBehaviour
                     else
                     {
                         Debug.LogWarning($"→ Mauvais ID (attendu {currentTarget}, reçu {target.targetID})");
+                        StartCoroutine(FeedbackMissedPhoto());
                     }
                 }
                 else
                 {
                     Debug.LogWarning("→ Touché mais PAS de PhotoTarget sur cet objet ou ses parents");
+                    StartCoroutine(FeedbackMissedPhoto());
                 }
 
                 Debug.DrawRay(ray.origin, ray.direction * hit.distance, Color.green, 2f);
@@ -87,16 +97,15 @@ public class PhotoManager : MonoBehaviour
             else
             {
                 Debug.LogWarning($"RIEN TOUCHÉ (LayerMask = {LayerMask.LayerToName(photoTargetLayer.value)})");
+                StartCoroutine(FeedbackMissedPhoto());
             }
         }
     }
 
     void TakePhoto()
     {
-        // 🚀 FLASH PHOTO JUICY !
         StartCoroutine(PhotoFlashEffect());
 
-        // UI task disparaît
         currentIcon.color = new Color(1, 1, 1, 0);
         currentText.text = "";
 
@@ -111,25 +120,65 @@ public class PhotoManager : MonoBehaviour
         }
     }
 
-    // ✨ EFFET FLASH PHOTO (0.2s total, ultra impactant)
+    // ✨ FLASH PHOTO (bonne photo)
     private IEnumerator PhotoFlashEffect()
     {
         if (photoFlash == null) yield break;
 
-        // Active + couleur de départ (blanc chaud, invisible)
         photoFlash.gameObject.SetActive(true);
-        photoFlash.color = new Color(0.98f, 0.92f, 0.8f, 0f);  // blanc légèrement chaud
+        photoFlash.color = new Color(0.98f, 0.92f, 0.8f, 0f);
 
-        // 1. FLASH INTENSE (0 → 1.3 en 0.08s)
         photoFlash.DOFade(1.3f, 0.08f);
-
         yield return new WaitForSeconds(0.08f);
-
-        // 2. FADE OUT RAPIDE (1.3 → 0 en 0.12s)
         yield return photoFlash.DOFade(0f, 0.12f).WaitForCompletion();
 
-        // 3. Cache
         photoFlash.gameObject.SetActive(false);
+    }
+
+    // 🚫 FEEDBACK PHOTO RATÉE → corrigé : sur playerCam.transform
+    private IEnumerator FeedbackMissedPhoto()
+    {
+        if (playerCam == null) yield break;
+
+        Vector3 originalLocalPos = playerCam.transform.localPosition;
+
+        // Shake position sur le Transform de la caméra
+        playerCam.transform.DOShakePosition(
+            duration: missShakeDuration,
+            strength: new Vector3(missShakeStrength, missShakeStrength, 0),
+            vibrato: 12,
+            randomness: 65,
+            snapping: false,
+            fadeOut: true
+        );
+
+        // Shake rotation sur le Transform de la caméra
+        playerCam.transform.DOShakeRotation(
+            duration: missShakeDuration * 0.7f,
+            strength: new Vector3(1.5f, 1.5f, 1f),
+            vibrato: 10,
+            randomness: 70,
+            fadeOut: true
+        );
+
+        yield return new WaitForSeconds(missShakeDuration);
+
+        // Reset position (sécurité)
+        playerCam.transform.localPosition = originalLocalPos;
+
+        // Flash rouge
+        if (redFlashOverlay != null)
+        {
+            redFlashOverlay.gameObject.SetActive(true);
+            redFlashOverlay.color = new Color(0.9f, 0.2f, 0.2f, 0f);
+
+            redFlashOverlay.DOFade(0.45f, missRedFlashDuration * 0.4f);
+            yield return new WaitForSeconds(missRedFlashDuration * 0.4f);
+
+            yield return redFlashOverlay.DOFade(0f, missRedFlashDuration * 0.6f).WaitForCompletion();
+
+            redFlashOverlay.gameObject.SetActive(false);
+        }
     }
 
     void UpdateCurrentTask()
