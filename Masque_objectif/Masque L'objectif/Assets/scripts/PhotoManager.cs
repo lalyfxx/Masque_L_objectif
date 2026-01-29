@@ -11,9 +11,13 @@ public class PhotoManager : MonoBehaviour
     public float rayDistance = 20f;
     public LayerMask photoTargetLayer;
 
-    [Header("UI")]
-    public Image currentIcon;
+    [Header("UI - Tâche actuelle")]
+    public Image currentIcon;                  // L'icône qui reste toujours blanche
     public TextMeshProUGUI currentText;
+
+    [Header("UI - Checkmark succès")]
+    public Image successCheckImage;            // ← Drag ici ton image du V vert
+    [SerializeField] private float checkDisplayTime = 1.2f;   // Combien de temps le V reste visible
 
     [Header("🎥 FLASH PHOTO EFFECT (bonne photo)")]
     public Image photoFlash;
@@ -28,8 +32,12 @@ public class PhotoManager : MonoBehaviour
     public bool drawPermanentRay = true;
 
     public int currentTarget = 0;
-    private string[] targetNames = { "Vase", "Livre", "Plante", "Chaussure", "Clé" };
-    private Color[] targetColors = { Color.red, Color.blue, Color.green, new Color(0.6f, 0.3f, 0.1f), Color.yellow };
+    // 🚀 14 objets en ANGLAIS
+    private string[] targetNames = {
+        "TV", "Photo frame", "Trash can", "Baguette", "Tissue box", 
+        "Yellow book", "Camembert", "Bottle", "Computer", "Handbag", 
+        "Wine glass", "Pillow", "Plant", "Clothes hanger"
+    };
 
     public static PhotoManager Instance { get; private set; }
 
@@ -47,6 +55,10 @@ public class PhotoManager : MonoBehaviour
 
         if (redFlashOverlay != null)
             redFlashOverlay.gameObject.SetActive(false);
+
+        // Cacher le checkmark au démarrage
+        if (successCheckImage != null)
+            successCheckImage.gameObject.SetActive(false);
     }
 
     void Update()
@@ -106,17 +118,45 @@ public class PhotoManager : MonoBehaviour
     {
         StartCoroutine(PhotoFlashEffect());
 
-        currentIcon.color = new Color(1, 1, 1, 0);
-        currentText.text = "";
+        // ────────────── AFFICHAGE DU V VERT ──────────────
+        if (successCheckImage != null)
+        {
+            successCheckImage.gameObject.SetActive(true);
+            successCheckImage.color = new Color(1, 1, 1, 0f); // départ transparent
 
+            // Fade in + léger pop
+            successCheckImage.DOFade(1f, 0.25f);
+            successCheckImage.transform.DOScale(1.2f, 0.25f).SetEase(Ease.OutBack);
+
+            // Attend + fade out
+            StartCoroutine(HideCheckAfterDelay());
+        }
+
+        // On vide le texte et on passe à la suivante
+        currentText.text = "";
         currentTarget++;
-        if (currentTarget >= 5)
+
+        // 🚀 CHANGE : 14 objets au lieu de 5
+        if (currentTarget >= 14)
         {
             GameManager.Instance.Win();
         }
         else
         {
             UpdateCurrentTask();
+        }
+    }
+
+    private IEnumerator HideCheckAfterDelay()
+    {
+        yield return new WaitForSeconds(checkDisplayTime);
+
+        if (successCheckImage != null)
+        {
+            successCheckImage.DOFade(0f, 0.3f);
+            successCheckImage.transform.DOScale(0.8f, 0.3f).SetEase(Ease.InBack);
+            yield return new WaitForSeconds(0.3f);
+            successCheckImage.gameObject.SetActive(false);
         }
     }
 
@@ -135,14 +175,13 @@ public class PhotoManager : MonoBehaviour
         photoFlash.gameObject.SetActive(false);
     }
 
-    // 🚫 FEEDBACK PHOTO RATÉE → corrigé : sur playerCam.transform
+    // 🚫 FEEDBACK PHOTO RATÉE
     private IEnumerator FeedbackMissedPhoto()
     {
         if (playerCam == null) yield break;
 
         Vector3 originalLocalPos = playerCam.transform.localPosition;
 
-        // Shake position sur le Transform de la caméra
         playerCam.transform.DOShakePosition(
             duration: missShakeDuration,
             strength: new Vector3(missShakeStrength, missShakeStrength, 0),
@@ -152,7 +191,6 @@ public class PhotoManager : MonoBehaviour
             fadeOut: true
         );
 
-        // Shake rotation sur le Transform de la caméra
         playerCam.transform.DOShakeRotation(
             duration: missShakeDuration * 0.7f,
             strength: new Vector3(1.5f, 1.5f, 1f),
@@ -163,10 +201,8 @@ public class PhotoManager : MonoBehaviour
 
         yield return new WaitForSeconds(missShakeDuration);
 
-        // Reset position (sécurité)
         playerCam.transform.localPosition = originalLocalPos;
 
-        // Flash rouge
         if (redFlashOverlay != null)
         {
             redFlashOverlay.gameObject.SetActive(true);
@@ -183,8 +219,13 @@ public class PhotoManager : MonoBehaviour
 
     void UpdateCurrentTask()
     {
-        currentIcon.color = targetColors[currentTarget];
-        currentText.text = "Photo de : " + targetNames[currentTarget];
+        // L'icône reste TOUJOURS blanche
+        if (currentIcon != null)
+        {
+            currentIcon.color = Color.white;
+        }
+
+        currentText.text = "Take photo of: " + targetNames[currentTarget];
     }
 
     private string GetFullPath(Transform t)
