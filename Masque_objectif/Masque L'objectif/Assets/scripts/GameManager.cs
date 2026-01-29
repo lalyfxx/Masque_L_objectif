@@ -41,6 +41,10 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("🎉 WIN ! 5 photos prises ! Perfect Shot !");
 
+        // Réapparition de la souris
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         if (winPanel != null)
         {
             winPanel.SetActive(true);
@@ -59,6 +63,10 @@ public class GameManager : MonoBehaviour
     public void Lose()
     {
         Debug.Log("💀 LOSE ! Cache a masqué l'objectif !");
+
+        // Réapparition de la souris
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
         if (losePanel != null)
         {
@@ -79,13 +87,17 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1f;
 
+        // On cache à nouveau la souris quand on rejoue (comme au début du jeu)
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
         if (CacheManager.Instance != null)
             CacheManager.Instance.ResetSpeed();
 
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    // ────────────── NOUVEAU : QUITTER LE JEU ──────────────
+    // Quitter le jeu
     public void QuitGame()
     {
         Debug.Log("Quitter le jeu...");
